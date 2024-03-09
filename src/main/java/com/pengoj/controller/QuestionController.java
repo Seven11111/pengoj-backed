@@ -13,6 +13,7 @@ import com.pengoj.exception.ThrowUtils;
 import com.pengoj.model.dto.question.*;
 import com.pengoj.model.entity.Question;
 import com.pengoj.model.entity.User;
+import com.pengoj.model.enums.UserRoleEnum;
 import com.pengoj.model.vo.QuestionVO;
 import com.pengoj.service.QuestionService;
 import com.pengoj.service.UserService;
@@ -157,7 +158,7 @@ public class QuestionController {
     }
     
     /**
-     * 根据 id 获取
+     * 根据 id 获取 （脱敏）
      *
      * @param id
      * @return
@@ -173,6 +174,29 @@ public class QuestionController {
         }
         return ResultUtils.success(questionService.getQuestionVO(question, request));
     }
+    /**
+     * 根据 id 获取
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/get")
+    public BaseResponse<Question> getQuestionById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Question question = questionService.getById(id);
+        if (question == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        // 不是本人或管理员，不能获取所有信息
+        if(!question.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        return ResultUtils.success(question);
+    }
+
 
 
     /**
